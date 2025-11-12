@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Sessions - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-users me-2"></i>Session Management</h1>
+            <a href="{{ url_for('main.qr_page') }}" class="btn btn-primary">
+                <i class="fas fa-qrcode me-2"></i>Generate QR Code
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Active Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div id="sessions-list">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Session Modal -->
+<div class="modal fade" id="createSessionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSessionForm">
+                    <div class="mb-3">
+                        <label for="sessionName" class="form-label">Session Name</label>
+                        <input type="text" class="form-control" id="sessionName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Authentication Method</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="authMethod" id="qrAuth" value="qr" checked>
+                            <label class="form-check-label" for="qrAuth">
+                                QR Code (Recommended)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="authMethod" id="phoneAuth" value="phone">
+                            <label class="form-check-label" for="phoneAuth">
+                                Phone Number
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="phoneNumberGroup" style="display: none;">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phoneNumber" placeholder="+1234567890">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createSession()">Create Session</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Scan QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Scan this QR code with your Telegram app:</p>
+                <div id="qrCodeContainer">
+                    <img id="qrCodeImage" src="" alt="QR Code" class="img-fluid">
+                </div>
+                <div class="mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Waiting for scan...</span>
+                    </div>
+                    <p class="mt-2">Waiting for you to scan the QR code...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phone Verification Modal -->
+<div class="modal fade" id="phoneModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Phone Verification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="codeStep">
+                    <p>Enter the verification code sent to your phone:</p>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="verificationCode" placeholder="12345">
+                    </div>
+                    <button class="btn btn-primary" onclick="verifyCode()">Verify Code</button>
+                </div>
+                <div id="passwordStep" style="display: none;">
+                    <p>Two-factor authentication is enabled. Enter your password:</p>
+                    <div class="mb-3">
+                        <input type="password" class="form-control" id="twoFactorPassword" placeholder="Password">
+                    </div>
+                    <button class="btn btn-primary" onclick="verifyPassword()">Verify Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSessionName = '';
+let qrCheckInterval = null;
+let currentSessionPage = 0;
+let totalSessionPages = 0;
+let totalSessions = 0;
+const sessionsPerPage = 5;
+
+// Toggle phone number input
+document.querySelectorAll('input[name="authMethod"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const phoneGroup = document.getElementById('phoneNumberGroup');
+        phoneGroup.style.display = this.value === 'phone' ? 'block' : 'none';
+    });
+});
+
+function loadSessions(page = 0) {
+    const offset = page * sessionsPerPage;
+    fetch(`/api/sessions?offset=${offset}&limit=${sessionsPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('sessions-list');
+            if (data.success) {
+                totalSessions = data.total;
+                totalSessionPages = Math.ceil(totalSessions / sessionsPerPage);
+                currentSessionPage = page;
+                
+                if (data.sessions.length > 0) {
+                    container.innerHTML = data.sessions.map(session => `
+                        <div class="row align-items-center mb-3 p-3 border rounded">
+                            <div class="col-md-4">
+                                <h6 class="mb-0">${session.name}</h6>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="badge bg-${getStatusColor(session.status)}">${session.status}</span>
+                            </div>
+                            <div class="col-md-3">
+                                ${session.type ? `<small class="text-muted">${session.type}</small>` : ''}
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-sm btn-danger" onclick="deleteSession('${session.name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center text-muted">No sessions found</div>';
+                }
+                renderSessionsPagination();
+            }
+        });
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'active': return 'success';
+        case 'waiting': return 'warning';
+        case 'code_sent': return 'info';
+        case 'password_required': return 'warning';
+        default: return 'secondary';
+    }
+}
+
+function createSession() {
+    const sessionName = document.getElementById('sessionName').value;
+    const authMethod = document.querySelector('input[name="authMethod"]:checked').value;
+    const phoneNumber = document.getElementById('phoneNumber').value;
+    
+    if (!sessionName) {
+        showToast('Please enter a session name', 'error');
+        return;
+    }
+    
+    currentSessionName = sessionName;
+    
+    const data = {
+        session_name: sessionName,
+        phone_number: authMethod === 'phone' ? phoneNumber : null
+    };
+    
+    fetch('/api/sessions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createSessionModal')).hide();
+            
+            if (data.data.type === 'qr') {
+                showQRCode(data.data.qr_image);
+            } else if (data.data.type === 'phone') {
+                showPhoneVerification();
+            }
+        } else {
+            showToast(data.error, 'error');
+        }
+    });
+}
+
+function showQRCode(qrImage) {
+    document.getElementById('qrCodeImage').src = qrImage;
+    const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+    modal.show();
+    
+    // Start checking QR status
+    qrCheckInterval = setInterval(checkQRStatus, 2000);
+}
+
+function checkQRStatus() {
+    fetch(`/api/sessions/${currentSessionName}/qr-status`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.status === 'success') {
+                clearInterval(qrCheckInterval);
+                bootstrap.Modal.getInstance(document.getElementById('qrModal')).hide();
+                showToast('Session created successfully!', 'success');
+                loadSessions();
+            }
+        });
+}
+
+function showPhoneVerification() {
+    const modal = new bootstrap.Modal(document.getElementById('phoneModal'));
+    modal.show();
+}
+
+function verifyCode() {
+    const code = document.getElementById('verificationCode').value;
+    
+    fetch(`/api/sessions/${currentSessionName}/verify`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code: code})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.data.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('phoneModal')).hide();
+                showToast('Session created successfully!', 'success');
+                loadSessions();
+            } else if (data.data.status === 'password_required') {
+                document.getElementById('codeStep').style.display = 'none';
+                document.getElementById('passwordStep').style.display = 'block';
+            }
+        } else {
+            showToast(data.error, 'error');
+        }
+    });
+}
+
+function verifyPassword() {
+    const password = document.getElementById('twoFactorPassword').value;
+    const code = document.getElementById('verificationCode').value;
+    
+    fetch(`/api/sessions/${currentSessionName}/verify`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code: code, password: password})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.data.status === 'success') {
+            bootstrap.Modal.getInstance(document.getElementById('phoneModal')).hide();
+            showToast('Session created successfully!', 'success');
+            loadSessions();
+        } else {
+            showToast(data.error || 'Verification failed', 'error');
+        }
+    });
+}
+
+function deleteSession(sessionName) {
+    if (confirm(`Are you sure you want to delete session "${sessionName}"?`)) {
+        fetch(`/api/sessions/${sessionName}`, {method: 'DELETE'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Session deleted successfully', 'success');
+                    loadSessions(currentSessionPage);
+                } else {
+                    showToast('Failed to delete session', 'error');
+                }
+            });
+    }
+}
+
+function renderSessionsPagination() {
+    const cardBody = document.querySelector('#sessions-list').parentElement;
+    let paginationContainer = document.getElementById('sessions-pagination');
+    
+    if (!paginationContainer) {
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'sessions-pagination';
+        paginationContainer.className = 'card-footer bg-light';
+        cardBody.parentElement.appendChild(paginationContainer);
+    }
+    
+    if (totalSessionPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    const from = currentSessionPage * sessionsPerPage + 1;
+    const to = Math.min((currentSessionPage + 1) * sessionsPerPage, totalSessions);
+    
+    let buttons = [];
+    
+    // Previous button
+    buttons.push(`
+        <button onclick="changeSessionPage(${currentSessionPage - 1})" 
+                class="btn btn-sm btn-outline-secondary ${currentSessionPage === 0 ? 'disabled' : ''}" 
+                ${currentSessionPage === 0 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `);
+    
+    // Page numbers
+    const startPage = Math.max(0, currentSessionPage - 2);
+    const endPage = Math.min(totalSessionPages - 1, currentSessionPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        buttons.push(`
+            <button onclick="changeSessionPage(${i})" 
+                    class="btn btn-sm ${i === currentSessionPage ? 'btn-primary' : 'btn-outline-secondary'}">
+                ${i + 1}
+            </button>
+        `);
+    }
+    
+    // Next button
+    buttons.push(`
+        <button onclick="changeSessionPage(${currentSessionPage + 1})" 
+                class="btn btn-sm btn-outline-secondary ${currentSessionPage === totalSessionPages - 1 ? 'disabled' : ''}" 
+                ${currentSessionPage === totalSessionPages - 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `);
+    
+    paginationContainer.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">Showing ${from} to ${to} of ${totalSessions} sessions</small>
+            <div class="btn-group" role="group">
+                ${buttons.join('')}
+            </div>
+        </div>
+    `;
+}
+
+function changeSessionPage(page) {
+    if (page < 0 || page >= totalSessionPages || page === currentSessionPage) return;
+    loadSessions(page);
+}
+
+// Load sessions on page load
+document.addEventListener('DOMContentLoaded', () => loadSessions());
+
+// Clean up interval when modal is closed
+document.getElementById('qrModal').addEventListener('hidden.bs.modal', function() {
+    if (qrCheckInterval) {
+        clearInterval(qrCheckInterval);
+    }
+});
+</script>
+{% endblock %}

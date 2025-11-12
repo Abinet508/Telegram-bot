@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Phone Management - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <i class="fas fa-phone mr-3 text-telegram"></i>Phone Number Management
+    </h1>
+    <div id="admin-required" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+            <div class="flex-1">
+                <p class="text-blue-800">This page requires admin access for full functionality.</p>
+            </div>
+            <a href="/login" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                <i class="fas fa-sign-in-alt mr-1"></i>Admin Login
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Pending</p>
+                <p class="text-4xl font-bold mt-2" id="pending-count">0</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-clock text-3xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium uppercase tracking-wide">Added</p>
+                <p class="text-4xl font-bold mt-2" id="added-count">0</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-check text-3xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-red-100 text-sm font-medium uppercase tracking-wide">Failed</p>
+                <p class="text-4xl font-bold mt-2" id="failed-count">0</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-times text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div id="admin-content" class="space-y-8">
+    <!-- Upload Section -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-telegram to-telegram-dark p-6">
+            <h2 class="text-2xl font-bold text-white">
+                <i class="fas fa-upload mr-3"></i>Upload Phone Numbers
+            </h2>
+            <p class="text-blue-100 mt-2">Add phone numbers for automated group joining</p>
+        </div>
+        
+        <div class="p-8">
+            <!-- Method Selection -->
+            <div class="flex space-x-1 bg-gray-100 rounded-xl p-1 mb-8">
+                <button onclick="switchMethod('text')" id="text-btn" class="flex-1 py-3 px-6 text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-telegram shadow-md">
+                    <i class="fas fa-keyboard mr-2"></i>Text Input
+                </button>
+                <button onclick="switchMethod('file')" id="file-btn" class="flex-1 py-3 px-6 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-file-upload mr-2"></i>File Upload
+                </button>
+            </div>
+            
+            <!-- Text Input Method -->
+            <div id="text-method" class="space-y-6">
+                <div>
+                    <label class="block text-lg font-semibold text-gray-800 mb-3">Enter Phone Numbers</label>
+                    <p class="text-gray-600 mb-4">Enter one phone number per line, starting with +</p>
+                    <textarea id="phone-text" rows="8" placeholder="+1234567890&#10;+9876543210&#10;+1122334455" 
+                              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-telegram focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none text-lg"></textarea>
+                </div>
+                <button onclick="uploadText()" class="w-full bg-gradient-to-r from-telegram to-telegram-dark hover:from-telegram-dark hover:to-telegram text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-lg">
+                    <i class="fas fa-upload mr-3"></i>Upload Phone Numbers
+                </button>
+            </div>
+            
+            <!-- File Upload Method -->
+            <div id="file-method" class="hidden space-y-6">
+                <div>
+                    <label class="block text-lg font-semibold text-gray-800 mb-3">Upload File</label>
+                    <div class="border-3 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-telegram transition-all duration-200 cursor-pointer" onclick="document.getElementById('phone-file').click()">
+                        <input type="file" id="phone-file" accept=".xlsx,.xls,.txt,.csv" class="hidden" onchange="updateFileName()">
+                        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-xl text-gray-600 mb-2">Click to upload or drag and drop</p>
+                        <p class="text-gray-500">Excel (.xlsx), Text (.txt), CSV (.csv)</p>
+                        <p id="file-name" class="text-telegram font-semibold mt-4 hidden"></p>
+                    </div>
+                </div>
+                <button onclick="uploadFile()" class="w-full bg-gradient-to-r from-telegram to-telegram-dark hover:from-telegram-dark hover:to-telegram text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-lg">
+                    <i class="fas fa-file-upload mr-3"></i>Upload File
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Invite Message Section -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 p-6">
+            <h2 class="text-2xl font-bold text-white">
+                <i class="fas fa-envelope-open-text mr-3"></i>Invite Message
+            </h2>
+            <p class="text-green-100 mt-2">Customize the fallback message sent when direct additions fail</p>
+        </div>
+
+        <div class="p-8">
+            <div class="mb-8">
+                <label class="block text-lg font-semibold text-gray-800 mb-3">Invite Message</label>
+                <textarea id="invite-message" rows="4" placeholder="🎉 You're invited to join our Telegram group! Click the link below to join:\n\n{invite_link}\n\nWelcome aboard!"
+                          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 text-lg resize-none"></textarea>
+                <p class="text-sm text-gray-600 mt-2">Use {invite_link} placeholder for the group invite link</p>
+            </div>
+
+            <button onclick="saveInviteMessage()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg text-lg">
+                <i class="fas fa-save mr-3"></i>Save Message
+            </button>
+        </div>
+    </div>
+    
+    <!-- Phone Numbers Table -->
+    <div id="admin-table" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gray-50 p-6 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-list mr-3 text-telegram"></i>Phone Numbers
+                </h2>
+                <p class="text-gray-600 mt-1">Manage your phone number database</p>
+            </div>
+            <button onclick="deleteAllPhones()" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-trash-alt mr-2"></i>Delete All Phones
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Phone Number</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Added At</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Processed At</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="phones-table" class="bg-white divide-y divide-gray-100">
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-4"></i>
+                            <p class="text-lg">Loading phone numbers...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div id="pagination-container" class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="showing-from">0</span> to <span id="showing-to">0</span> of <span id="total-count">0</span> phone numbers
+                </div>
+                <div class="flex space-x-2" id="pagination-buttons">
+                    <!-- Pagination buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let phones = [];
+let isAdmin = false;
+let currentPage = 0;
+let totalPages = 0;
+let totalPhones = 0;
+const phonesPerPage = 10;
+
+function checkAdminStatus() {
+    fetch('/api/sessions')
+        .then(response => {
+            if (response.status === 401) {
+                isAdmin = false;
+                document.getElementById('admin-required').classList.remove('hidden');
+                document.getElementById('admin-content').classList.add('hidden');
+            } else {
+                isAdmin = true;
+                loadPhones();
+                loadInviteMessage();
+            }
+        })
+        .catch(() => {
+            isAdmin = false;
+            document.getElementById('admin-required').classList.remove('hidden');
+            document.getElementById('admin-content').classList.add('hidden');
+        });
+}
+
+function loadInviteMessage() {
+    fetch('/api/admin/invite-message')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('invite-message').value = data.message;
+            }
+        })
+        .catch(error => console.error('Error loading invite message:', error));
+}
+
+function loadPhones(page = 0) {
+    if (!isAdmin) return;
+    
+    const offset = page * phonesPerPage;
+    fetch(`/api/phones?offset=${offset}&limit=${phonesPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                phones = data.phones;
+                totalPhones = data.total;
+                totalPages = Math.ceil(totalPhones / phonesPerPage);
+                currentPage = page;
+                updateStats();
+                renderPhonesTable();
+                renderPagination();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading phones:', error);
+            showToast('Failed to load phone numbers', 'error');
+        });
+}
+
+function updateStats() {
+    // Load all phones for stats (without pagination)
+    fetch('/api/phones')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const allPhones = data.phones;
+                const pending = allPhones.filter(p => p.status === 'pending').length;
+                const added = allPhones.filter(p => p.status === 'added').length;
+                const failed = allPhones.filter(p => p.status === 'failed').length;
+                
+                document.getElementById('pending-count').textContent = pending;
+                document.getElementById('added-count').textContent = added;
+                document.getElementById('failed-count').textContent = failed;
+            }
+        })
+        .catch(error => console.error('Error loading stats:', error));
+}
+
+function renderPhonesTable() {
+    const tbody = document.getElementById('phones-table');
+    
+    if (phones.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>
+                    <p class="text-xl">No phone numbers found</p>
+                    <p class="text-gray-400 mt-2">Upload some phone numbers to get started</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = phones.map(phone => `
+        <tr class="hover:bg-gray-50 transition-colors duration-150">
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <i class="fas fa-phone text-telegram mr-3"></i>
+                    <span class="text-lg font-medium text-gray-900">${phone.phone}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(phone.status)}">${phone.status}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-gray-600">${formatDate(phone.added_at)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-gray-600">${phone.processed_at ? formatDate(phone.processed_at) : '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex space-x-3">
+                    <button onclick="deletePhone('${phone.phone}')" class="text-red-600 hover:text-red-800 transition-colors p-2 hover:bg-red-50 rounded-lg">
+                        <i class="fas fa-trash text-lg"></i>
+                    </button>
+                    <button onclick="deleteSession('${phone.phone}')" class="text-yellow-600 hover:text-yellow-800 transition-colors p-2 hover:bg-yellow-50 rounded-lg">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'pending': return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+        case 'added': return 'bg-green-100 text-green-800 border border-green-200';
+        case 'failed': return 'bg-red-100 text-red-800 border border-red-200';
+        default: return 'bg-gray-100 text-gray-800 border border-gray-200';
+    }
+}
+
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleString();
+}
+
+function switchMethod(method) {
+    const textMethod = document.getElementById('text-method');
+    const fileMethod = document.getElementById('file-method');
+    const textBtn = document.getElementById('text-btn');
+    const fileBtn = document.getElementById('file-btn');
+    
+    if (method === 'text') {
+        textMethod.classList.remove('hidden');
+        fileMethod.classList.add('hidden');
+        textBtn.classList.add('bg-white', 'text-telegram', 'shadow-md');
+        textBtn.classList.remove('text-gray-600', 'hover:text-gray-800');
+        fileBtn.classList.remove('bg-white', 'text-telegram', 'shadow-md');
+        fileBtn.classList.add('text-gray-600', 'hover:text-gray-800');
+    } else {
+        fileMethod.classList.remove('hidden');
+        textMethod.classList.add('hidden');
+        fileBtn.classList.add('bg-white', 'text-telegram', 'shadow-md');
+        fileBtn.classList.remove('text-gray-600', 'hover:text-gray-800');
+        textBtn.classList.remove('bg-white', 'text-telegram', 'shadow-md');
+        textBtn.classList.add('text-gray-600', 'hover:text-gray-800');
+    }
+}
+
+function updateFileName() {
+    const fileInput = document.getElementById('phone-file');
+    const fileName = document.getElementById('file-name');
+    
+    if (fileInput.files[0]) {
+        fileName.textContent = `Selected: ${fileInput.files[0].name}`;
+        fileName.classList.remove('hidden');
+    } else {
+        fileName.classList.add('hidden');
+    }
+}
+
+function uploadText() {
+    const phoneText = document.getElementById('phone-text').value;
+    if (!phoneText.trim()) {
+        showToast('Please enter phone numbers', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('text', phoneText);
+    
+    fetch('/api/phones/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Added ${data.added} of ${data.total} phone numbers`, 'success');
+            document.getElementById('phone-text').value = '';
+            loadPhones(currentPage);
+        } else {
+            showToast('Upload failed: ' + data.error, 'error');
+        }
+    });
+}
+
+function uploadFile() {
+    const fileInput = document.getElementById('phone-file');
+    if (!fileInput.files[0]) {
+        showToast('Please select a file', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    fetch('/api/phones/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Added ${data.added} of ${data.total} phone numbers`, 'success');
+            fileInput.value = '';
+            document.getElementById('file-name').classList.add('hidden');
+            loadPhones(currentPage);
+        } else {
+            showToast('Upload failed: ' + data.error, 'error');
+        }
+    });
+}
+
+
+function saveInviteMessage() {
+    const inviteMessage = document.getElementById('invite-message').value.trim();
+
+    if (!inviteMessage) {
+        showToast('Please enter an invite message', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('message', inviteMessage);
+
+    fetch('/api/admin/invite-message', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Invite message saved', 'success');
+        } else {
+            showToast('Failed to save invite message', 'error');
+        }
+    })
+    .catch(() => {
+        showToast('Network error occurred', 'error');
+    });
+}
+
+function deletePhone(phone) {
+    if (!confirm('Delete this phone number?')) return;
+    
+    fetch(`/api/phones/${encodeURIComponent(phone)}`, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Phone number deleted', 'success');
+                loadPhones(currentPage);
+            } else {
+                showToast('Failed to delete phone number', 'error');
+            }
+        });
+}
+
+function deleteSession(sessionName) {
+    if (!confirm('Delete this session?')) return;
+    
+    fetch(`/api/sessions/${encodeURIComponent(sessionName)}`, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Session deleted', 'success');
+                loadPhones(currentPage);
+            } else {
+                showToast('Failed to delete session', 'error');
+            }
+        });
+}
+
+function deleteAllPhones() {
+    if (!confirm('Delete ALL phone numbers? This cannot be undone!')) return;
+    
+    fetch('/api/phones', {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Deleted ${data.deleted_count} phone numbers`, 'success');
+                loadPhones(currentPage);
+            } else {
+                showToast('Failed to delete all phone numbers', 'error');
+            }
+        });
+}
+
+// Check admin status on page load
+document.addEventListener('DOMContentLoaded', checkAdminStatus);
+
+function renderPagination() {
+    const container = document.getElementById('pagination-buttons');
+    const showingFrom = document.getElementById('showing-from');
+    const showingTo = document.getElementById('showing-to');
+    const totalCount = document.getElementById('total-count');
+    
+    // Update showing info
+    const from = currentPage * phonesPerPage + 1;
+    const to = Math.min((currentPage + 1) * phonesPerPage, totalPhones);
+    showingFrom.textContent = totalPhones > 0 ? from : 0;
+    showingTo.textContent = to;
+    totalCount.textContent = totalPhones;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let buttons = [];
+    
+    // Previous button
+    buttons.push(`
+        <button onclick="changePage(${currentPage - 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${currentPage === 0 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}" 
+                ${currentPage === 0 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `);
+    
+    // Page numbers
+    const startPage = Math.max(0, currentPage - 2);
+    const endPage = Math.min(totalPages - 1, currentPage + 2);
+    
+    if (startPage > 0) {
+        buttons.push(`<button onclick="changePage(0)" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">1</button>`);
+        if (startPage > 1) {
+            buttons.push(`<span class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300">...</span>`);
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        buttons.push(`
+            <button onclick="changePage(${i})" 
+                    class="px-3 py-2 text-sm font-medium border ${i === currentPage ? 'bg-telegram text-white border-telegram' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'}">
+                ${i + 1}
+            </button>
+        `);
+    }
+    
+    if (endPage < totalPages - 1) {
+        if (endPage < totalPages - 2) {
+            buttons.push(`<span class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300">...</span>`);
+        }
+        buttons.push(`<button onclick="changePage(${totalPages - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700">${totalPages}</button>`);
+    }
+    
+    // Next button
+    buttons.push(`
+        <button onclick="changePage(${currentPage + 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${currentPage === totalPages - 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}" 
+                ${currentPage === totalPages - 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `);
+    
+    container.innerHTML = buttons.join('');
+}
+
+function changePage(page) {
+    if (page < 0 || page >= totalPages || page === currentPage) return;
+    loadPhones(page);
+}
+
+// Refresh data every 30 seconds
+setInterval(() => {
+    if (isAdmin) {
+        loadPhones(currentPage);
+        loadInviteMessage();
+    }
+}, 30000);
+</script>
+{% endblock %}

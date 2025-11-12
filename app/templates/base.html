@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Telegram Group Onboarding{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'telegram': '#0088cc',
+                        'telegram-dark': '#006699'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(-45deg, #0088cc, #006699, #4f46e5, #7c3aed);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-gradient-to-r from-telegram to-telegram-dark shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center text-white hover:text-gray-200 transition-colors">
+                        <i class="fab fa-telegram-plane text-2xl mr-3"></i>
+                        <span class="font-bold text-xl">Telegram Bot Manager</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <a href="/qr" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-qrcode mr-1"></i>Join Group
+                    </a>
+                    {% if request.session.admin_logged_in %}
+                    <a href="/phones" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-phone mr-1"></i>Phones
+                    </a>
+                    <a href="/admin" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-cog mr-1"></i>Admin
+                    </a>
+                    <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50">
+        <div id="toast" class="hidden bg-white border border-gray-200 rounded-lg shadow-lg p-4 mb-4 max-w-sm">
+            <div class="flex items-center">
+                <div id="toast-icon" class="mr-3"></div>
+                <div id="toast-message" class="text-sm font-medium text-gray-900"></div>
+                <button onclick="hideToast()" class="ml-auto text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const messageEl = document.getElementById('toast-message');
+            
+            messageEl.textContent = message;
+            
+            // Reset classes
+            toast.className = 'bg-white border rounded-lg shadow-lg p-4 mb-4 max-w-sm';
+            icon.className = 'mr-3 text-lg';
+            
+            switch(type) {
+                case 'success':
+                    toast.classList.add('border-green-200', 'bg-green-50');
+                    icon.classList.add('fas', 'fa-check-circle', 'text-green-500');
+                    messageEl.classList.add('text-green-800');
+                    break;
+                case 'error':
+                    toast.classList.add('border-red-200', 'bg-red-50');
+                    icon.classList.add('fas', 'fa-exclamation-circle', 'text-red-500');
+                    messageEl.classList.add('text-red-800');
+                    break;
+                case 'warning':
+                    toast.classList.add('border-yellow-200', 'bg-yellow-50');
+                    icon.classList.add('fas', 'fa-exclamation-triangle', 'text-yellow-500');
+                    messageEl.classList.add('text-yellow-800');
+                    break;
+                default:
+                    toast.classList.add('border-blue-200', 'bg-blue-50');
+                    icon.classList.add('fas', 'fa-info-circle', 'text-blue-500');
+                    messageEl.classList.add('text-blue-800');
+            }
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => hideToast(), 5000);
+        }
+        
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

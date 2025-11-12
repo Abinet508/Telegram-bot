@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication Management - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <i class="fas fa-users-cog mr-3 text-telegram"></i>Authentication Management
+    </h1>
+    <p class="text-lg text-gray-600">Manage admin users and passwords</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Change Password -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <h3 class="text-lg font-semibold text-white">
+                <i class="fas fa-key mr-2"></i>Change Password
+            </h3>
+        </div>
+        <div class="p-6">
+            <form id="change-password-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                    <input type="password" id="old-password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                    <input type="password" id="new-password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>Change Password
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create User -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <h3 class="text-lg font-semibold text-white">
+                <i class="fas fa-user-plus mr-2"></i>Create New User
+            </h3>
+        </div>
+        <div class="p-6">
+            <form id="create-user-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="new-username" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="new-user-password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="new-user-role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="user">User (Phone management only)</option>
+                        <option value="admin">Admin (Full access)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create User
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-users mr-2 text-telegram"></i>Admin Users
+        </h3>
+    </div>
+    <div class="p-6">
+        <div id="users-list">
+            <div class="text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin mr-2"></i>Loading users...
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadUsers() {
+    fetch('/api/admin/users')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderUsers(data.users);
+            }
+        })
+        .catch(error => console.error('Error loading users:', error));
+}
+
+function renderUsers(users) {
+    const container = document.getElementById('users-list');
+    
+    if (users.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500">No users found</div>';
+        return;
+    }
+    
+    container.innerHTML = users.map(user => `
+        <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
+            <div class="flex items-center">
+                <i class="fas fa-user text-gray-400 mr-3"></i>
+                <span class="font-medium text-gray-900">${user.username}</span>
+                <span class="ml-2 px-2 py-1 text-xs rounded-full ${
+                    user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                }">${user.role}</span>
+            </div>
+            <div class="flex space-x-2">
+                <select onchange="changeRole('${user.username}', this.value)" class="text-sm border border-gray-300 rounded px-2 py-1">
+                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+                <button onclick="deleteUser('${user.username}')" class="text-red-600 hover:text-red-800 px-3 py-1 rounded transition-colors">
+                    <i class="fas fa-trash mr-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function changeRole(username, newRole) {
+    fetch(`/api/admin/users/${username}/role`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({role: newRole})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Role changed for ${username}`, 'success');
+        } else {
+            showToast(data.error || 'Failed to change role', 'error');
+            loadUsers();
+        }
+    });
+}
+
+function deleteUser(username) {
+    if (!confirm(`Delete user "${username}"?`)) return;
+    
+    fetch(`/api/admin/users/${username}`, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`User "${username}" deleted successfully`, 'success');
+                loadUsers();
+            } else {
+                showToast(data.error || 'Failed to delete user', 'error');
+            }
+        });
+}
+
+document.getElementById('change-password-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const oldPassword = document.getElementById('old-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    
+    fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            old_password: oldPassword,
+            new_password: newPassword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Password changed successfully', 'success');
+            document.getElementById('change-password-form').reset();
+        } else {
+            showToast(data.error || 'Failed to change password', 'error');
+        }
+    });
+});
+
+document.getElementById('create-user-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('new-username').value;
+    const password = document.getElementById('new-user-password').value;
+    const role = document.getElementById('new-user-role').value;
+    
+    fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            username: username,
+            password: password,
+            role: role
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`User "${username}" created successfully`, 'success');
+            document.getElementById('create-user-form').reset();
+            loadUsers();
+        } else {
+            showToast(data.error || 'Failed to create user', 'error');
+        }
+    });
+});
+
+// Load users on page load
+document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+{% endblock %}

@@ -1,0 +1,1325 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <i class="fas fa-cog mr-3 text-telegram"></i>Admin Control Panel
+    </h1>
+    <p class="text-lg text-gray-600">Manage system settings and monitor operations</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Active Sessions</p>
+                <p class="text-3xl font-bold" id="active-sessions">0</p>
+            </div>
+            <div class="bg-blue-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-users text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Total Members</p>
+                <p class="text-3xl font-bold" id="total-members">0</p>
+            </div>
+            <div class="bg-green-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-user-friends text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-yellow-100 text-sm font-medium">Blacklisted</p>
+                <p class="text-3xl font-bold" id="blacklisted-users">0</p>
+            </div>
+            <div class="bg-yellow-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-user-slash text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Operations</p>
+                <p class="text-3xl font-bold" id="operations-count">0</p>
+            </div>
+            <div class="bg-purple-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-cogs text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Session Management -->
+<div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+    <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
+        <h3 class="text-lg font-semibold text-white">
+            <i class="fas fa-crown mr-2"></i>Admin Session Management
+        </h3>
+    </div>
+    <div class="p-6">
+        <div id="admin-session-status">
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+                <p class="text-gray-500">Loading admin session status...</p>
+            </div>
+        </div>
+        
+        <div id="admin-groups-section" class="hidden mt-6">
+            <h4 class="text-sm font-medium text-gray-900 mb-3">Available Groups</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="admin-groups-list">
+                <!-- Groups will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Cards -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Session Creation Settings -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-telegram to-telegram-dark px-6 py-4">
+            <h3 class="text-lg font-semibold text-white">
+                <i class="fas fa-qrcode mr-2"></i>Session Creation
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">Enable Public Session Creation</h4>
+                    <p class="text-sm text-gray-500">Allow users to create sessions by scanning QR codes</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="session-creation-enabled" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-telegram"></div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Add Users Settings -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+            <h3 class="text-lg font-semibold text-white">
+                <i class="fas fa-user-plus mr-2"></i>Auto Add Users
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">Enable Automated User Addition</h4>
+                    <p class="text-sm text-gray-500">Automatically add users to groups</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="auto-add-enabled" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Target Group ID</label>
+                    <input type="text" id="target-group-id" placeholder="-1001234567890" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Max Users Per Session</label>
+                        <input type="number" id="max-users" value="50" min="1" max="200"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Delay (seconds)</label>
+                        <input type="number" id="delay-seconds" value="10" min="1" max="300"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Batch Size</label>
+                    <input type="number" id="batch-size" value="3" min="1" max="10"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="mt-8 flex flex-wrap gap-4 items-center">
+    <button onclick="saveSettings()" class="bg-gradient-to-r from-telegram to-telegram-dark hover:from-telegram-dark hover:to-telegram text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <i class="fas fa-save mr-2"></i>Save Settings
+    </button>
+    
+    <button id="auto-add-button" onclick="toggleAutoAdd()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <span id="auto-add-button-icon" class="mr-2"><i class="fas fa-play"></i></span><span id="auto-add-button-text">Start Auto Add</span>
+    </button>
+
+    <span id="auto-add-status-message" class="text-sm text-gray-600">Automation paused</span>
+    
+
+    
+    <a href="/admin/auth" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <i class="fas fa-users-cog mr-2"></i>Manage Users
+    </a>
+    
+    <button onclick="deleteAllSessions()" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <i class="fas fa-trash-alt mr-2"></i>Delete All Sessions
+    </button>
+</div>
+
+<!-- Sessions Management -->
+<div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-list mr-2 text-telegram"></i>Session Management
+        </h3>
+    </div>
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions-table" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Loading sessions...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sessions Pagination -->
+        <div id="sessions-pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="sessions-showing-from">0</span> to <span id="sessions-showing-to">0</span> of <span id="sessions-total-count">0</span> sessions
+                </div>
+                <div class="flex space-x-2" id="sessions-pagination-buttons">
+                    <!-- Pagination buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let settings = {};
+let autoAddState = {
+    running: false,
+    enabled: false
+};
+let currentSessionsPage = 0;
+let totalSessionsPages = 0;
+let totalSessions = 0;
+const sessionsPerPage = 5;
+
+function loadSettings() {
+    fetch('/api/admin/settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                settings = data.settings;
+                updateUI();
+            }
+        })
+        .catch(error => console.error('Error loading settings:', error));
+}
+
+function loadStats() {
+    // Force update group count first, then load stats
+    updateTargetGroupCountSilently().then(() => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        fetch('/api/stats', { signal: controller.signal })
+            .then(response => {
+                clearTimeout(timeoutId);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('active-sessions').textContent = data.stats.active_sessions;
+                    document.getElementById('total-members').textContent = data.stats.total_group_members;
+                    document.getElementById('blacklisted-users').textContent = data.stats.blacklisted_users ?? 0;
+                    document.getElementById('operations-count').textContent = (data.stats.active_operations ?? 0) + (data.stats.pending_operations ?? 0);
+                }
+            })
+            .catch(error => {
+                clearTimeout(timeoutId);
+                if (error.name !== 'AbortError') {
+                    console.error('Error loading stats:', error);
+                }
+            });
+    });
+}
+
+function loadAdminSession() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    fetch('/api/admin/session', { signal: controller.signal })
+        .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                renderAdminSessionStatus(data.admin_session);
+                if (data.admin_session) {
+                    loadPhoneStats();
+                }
+            } else {
+                console.log('Admin session load failed:', data.error);
+                renderAdminSessionStatus(null);
+            }
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                console.log('Admin session request timed out');
+            } else {
+                console.error('Error loading admin session:', error);
+            }
+            renderAdminSessionStatus(null);
+        });
+}
+
+// Fallback function to ensure admin session loads
+function forceLoadAdminSession() {
+    console.log('Force loading admin session...');
+    fetch('/api/admin/session')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Admin session data:', data);
+            renderAdminSessionStatus(data.success ? data.admin_session : null);
+        })
+        .catch(error => {
+            console.error('Force load failed:', error);
+            renderAdminSessionStatus(null);
+        });
+}
+
+function loadPhoneStats() {
+    fetch('/api/phones')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const phones = data.phones;
+                const pending = phones.filter(p => p.status === 'pending').length;
+                const added = phones.filter(p => p.status === 'added').length;
+                const failed = phones.filter(p => p.status === 'failed').length;
+                
+                // Update phone stats in admin groups section if it exists
+                const phoneStats = document.getElementById('phone-stats');
+                if (phoneStats) {
+                    document.getElementById('phone-pending').textContent = pending;
+                    document.getElementById('phone-added').textContent = added;
+                    document.getElementById('phone-failed').textContent = failed;
+                    phoneStats.classList.remove('hidden');
+                }
+            }
+        })
+        .catch(error => console.error('Error loading phone stats:', error));
+}
+
+function renderAdminSessionStatus(adminSession) {
+    const container = document.getElementById('admin-session-status');
+    
+    if (adminSession) {
+        container.innerHTML = `
+            <div class="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div class="flex items-center">
+                    <div class="bg-green-100 rounded-full p-2 mr-3">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-green-800">Admin Session Active</h4>
+                        <p class="text-sm text-green-600">@${adminSession.username || 'N/A'} - ${adminSession.first_name || 'Admin'}</p>
+                    </div>
+                </div>
+                <button onclick="removeAdminSession()" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-trash mr-1"></i>Remove
+                </button>
+            </div>
+        `;
+        document.getElementById('admin-groups-section').classList.remove('hidden');
+        renderEmptyGroupSelector();
+    } else {
+        container.innerHTML = `
+            <div class="text-center p-6 bg-gray-50 border border-gray-200 rounded-lg">
+                <div class="bg-gray-100 rounded-full p-3 mx-auto w-16 h-16 flex items-center justify-center mb-4">
+                    <i class="fas fa-crown text-gray-400 text-2xl"></i>
+                </div>
+                <h4 class="text-lg font-medium text-gray-900 mb-2">No Admin Session</h4>
+                <p class="text-gray-600 mb-4">Create an admin session to manage groups and users</p>
+                <button onclick="createAdminSession()" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-qrcode mr-2"></i>Scan Admin QR
+                </button>
+            </div>
+        `;
+        document.getElementById('admin-groups-section').classList.add('hidden');
+    }
+}
+
+function loadAllGroups() {
+    console.log('Starting to load all groups');
+    fetch('/api/admin/all-groups')
+        .then(response => {
+            console.log('Response received:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data);
+            const select = document.getElementById('target-group-select');
+            if (select) {
+                if (data.success && data.groups && data.groups.length > 0) {
+                    console.log(`Found ${data.groups.length} groups`);
+                    select.innerHTML = '<option value="">Choose a group...</option>' + 
+                        data.groups.map(group => `<option value="${group.id}">${group.title} (${group.participants_count || 0} members)</option>`).join('');
+                    
+                    // Load saved target group and set it immediately
+                    setTimeout(() => {
+                        loadCurrentTargetGroup();
+                    }, 100);
+                } else {
+                    console.log('No groups found or data.success is false');
+                    select.innerHTML = '<option value="">No groups found</option>';
+                }
+            } else {
+                console.log('Select element not found');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading all groups:', error);
+            const select = document.getElementById('target-group-select');
+            if (select) {
+                select.innerHTML = '<option value="">Error loading groups</option>';
+            }
+        });
+}
+
+let groupsLoaded = false;
+
+function loadGroupsOnDemand() {
+    const select = document.getElementById('target-group-select');
+    if (!groupsLoaded && select) {
+        const currentValue = select.value;
+        const currentText = select.options[select.selectedIndex]?.text;
+        
+        select.innerHTML = '<option value="">Loading groups...</option>';
+        
+        fetch('/api/admin/all-groups')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.groups && data.groups.length > 0) {
+                    select.innerHTML = '<option value="">Choose a group...</option>' + 
+                        data.groups.map(group => `<option value="${group.id}">${group.title} (${group.participants_count || 0} members)</option>`).join('');
+                    
+                    // Restore previous selection if it exists
+                    if (currentValue) {
+                        select.value = currentValue;
+                        if (select.selectedIndex === 0) {
+                            // If the value wasn't found in the new options, add it back
+                            const option = document.createElement('option');
+                            option.value = currentValue;
+                            option.text = currentText || `Group ${currentValue}`;
+                            option.selected = true;
+                            select.insertBefore(option, select.firstChild.nextSibling);
+                        }
+                    } else {
+                        loadCurrentTargetGroup();
+                    }
+                } else {
+                    select.innerHTML = '<option value="">No groups found</option>';
+                }
+                groupsLoaded = true;
+            })
+            .catch(error => {
+                console.error('Error loading groups:', error);
+                select.innerHTML = '<option value="">Error loading groups</option>';
+            });
+    }
+}
+
+function renderGroupSelector(groups) {
+    // Don't recreate if groups are being loaded
+    if (groupsLoaded && groups.length === 0) {
+        return;
+    }
+    
+    // Remove existing group selector
+    const existing = document.getElementById('group-selector');
+    if (existing) existing.remove();
+    
+    const selectorHtml = `
+        <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h5 class="font-semibold text-green-800 mb-3">
+                <i class="fas fa-bullseye mr-2"></i>Select Target Group
+            </h5>
+            <div class="mb-4">
+                <select id="target-group-select" class="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" onfocus="loadGroupsOnDemand()">
+                    <option value="">Choose a group...</option>
+                    ${groups.map(group => `<option value="${group.id}">${group.title} (${group.participants_count || 0} members)</option>`).join('')}
+                </select>
+            </div>
+            <button onclick="saveTargetGroup()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                <i class="fas fa-save mr-2"></i>Save Target Group
+            </button>
+        </div>
+        
+    `;
+    
+    const container = document.getElementById('admin-groups-section');
+    const div = document.createElement('div');
+    div.id = 'group-selector';
+    div.innerHTML = selectorHtml;
+    container.appendChild(div);
+    
+    loadCurrentTargetGroup();
+    loadAdminAsUserToggle();
+    loadUserAsAdminToggle();
+}
+
+function renderEmptyGroupSelector() {
+    const existing = document.getElementById('group-selector');
+    if (existing) existing.remove();
+    
+    const selectorHtml = `
+        <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h5 class="font-semibold text-green-800 mb-3">
+                <i class="fas fa-bullseye mr-2"></i>Select Target Group
+            </h5>
+            <div class="mb-4">
+                <select id="target-group-select" class="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" onchange="onTargetGroupChange()">
+                    <option value="">Loading saved preference...</option>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="loadGroupsOnDemand()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-sync mr-2"></i>Load Groups
+                </button>
+                <button onclick="saveTargetGroup()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>Save Target Group
+                </button>
+            </div>
+        </div>
+       
+    `;
+    
+    const container = document.getElementById('admin-groups-section');
+    const div = document.createElement('div');
+    div.id = 'group-selector';
+    div.innerHTML = selectorHtml;
+    container.appendChild(div);
+    
+    // Load saved preference immediately, then load groups in background
+    loadSavedTargetGroupPreference();
+    setTimeout(() => {
+        loadGroupsOnDemand();
+    }, 100);
+    
+    loadAdminAsUserToggle();
+    loadUserAsAdminToggle();
+}
+
+function loadSavedTargetGroupPreference() {
+    fetch('/api/preferences/selected_admin_target_group')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.value && data.value.groupId) {
+                const select = document.getElementById('target-group-select');
+                if (select) {
+                    // Show saved preference immediately
+                    select.innerHTML = `<option value="${data.value.groupId}" selected>${data.value.groupText}</option>`;
+                }
+            }
+        })
+        .catch(error => console.log('No saved preference found'));
+}
+
+function onTargetGroupChange() {
+    const select = document.getElementById('target-group-select');
+    const groupId = select.value;
+    
+    if (groupId) {
+        // Save the new selection immediately
+        const selectedText = select.options[select.selectedIndex].text;
+        
+        // Save to admin settings
+        const formData = new FormData();
+        formData.append('group_id', groupId);
+        
+        fetch('/api/admin/target-group', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update group count for the new selection
+                updateTargetGroupCountSilently();
+                
+                // Save to user preferences
+                fetch('/api/preferences', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        key: 'selected_admin_target_group',
+                        value: {
+                            groupId: groupId,
+                            groupText: selectedText
+                        }
+                    })
+                });
+            }
+        })
+        .catch(error => console.error('Failed to save target group:', error));
+    }
+}
+
+function loadCurrentTargetGroup() {
+    fetch('/api/admin/target-group')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.group_id) {
+                const select = document.getElementById('target-group-select');
+                if (select) {
+                    select.value = data.group_id;
+                    console.log('Set target group to:', data.group_id);
+                }
+            }
+        })
+        .catch(error => console.error('Error loading target group:', error));
+}
+
+function saveTargetGroup() {
+    const select = document.getElementById('target-group-select');
+    const groupId = select.value;
+    
+    if (!groupId) {
+        showToast('Please select a group', 'error');
+        return;
+    }
+    
+    const selectedText = select.options[select.selectedIndex].text;
+    
+    // Save to admin settings
+    const formData = new FormData();
+    formData.append('group_id', groupId);
+    
+    fetch('/api/admin/target-group', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update group count immediately after saving
+            updateTargetGroupCountSilently();
+            
+            // Also save to user preferences
+            return fetch('/api/preferences', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    key: 'selected_admin_target_group',
+                    value: {
+                        groupId: groupId,
+                        groupText: selectedText
+                    }
+                })
+            });
+        } else {
+            throw new Error('Failed to save to admin settings');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Target group saved: ${selectedText}`, 'success');
+        } else {
+            showToast('Saved to admin settings but failed to save preference', 'warning');
+        }
+    })
+    .catch(error => {
+        showToast('Failed to save target group', 'error');
+    });
+}
+
+
+
+function loadAdminGroups() {
+    fetch('/api/admin/groups')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderAdminGroups(data.groups);
+            }
+        })
+        .catch(error => console.error('Error loading admin groups:', error));
+}
+
+function renderAdminGroups(groups) {
+    const container = document.getElementById('admin-groups-list');
+    
+    if (groups.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 col-span-2">No groups found</p>';
+        return;
+    }
+    
+    container.innerHTML = groups.map(group => `
+        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h5 class="font-medium text-gray-900 truncate">${group.title}</h5>
+                    <p class="text-sm text-gray-500">${group.participants_count || 0} members</p>
+                </div>
+                <button onclick="selectGroup(${group.group_id}, '${group.title}')" class="text-purple-600 hover:text-purple-800">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function createAdminSession() {
+    window.location.href = '/admin/qr';
+}
+
+function removeAdminSession() {
+    if (!confirm('Remove admin session? This will disconnect the admin account.')) return;
+    
+    fetch('/api/admin/session', {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Admin session removed successfully', 'success');
+                loadAdminSession();
+            } else {
+                showToast('Failed to remove admin session', 'error');
+            }
+        });
+}
+
+function selectGroup(groupId, groupTitle) {
+    // Store selected group for use in other operations
+    localStorage.setItem('selectedGroup', JSON.stringify({id: groupId, title: groupTitle}));
+    showToast(`Selected group: ${groupTitle}`, 'success');
+    
+    // Update automation section
+    updateAutomationSection(groupId, groupTitle);
+}
+
+function updateAutomationSection(groupId, groupTitle) {
+    // Add automation controls to admin panel
+    const automationHtml = `
+        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h5 class="font-semibold text-blue-800 mb-3">
+                <i class="fas fa-robot mr-2"></i>Phone Automation for ${groupTitle}
+            </h5>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-blue-700 mb-1">Delay (seconds)</label>
+                    <input type="number" id="auto-delay" value="30" min="10" max="300" class="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-blue-700 mb-1">Batch Size</label>
+                    <input type="number" id="auto-batch" value="5" min="1" max="20" class="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="startPhoneAutomation(${groupId})" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-play mr-2"></i>Start Adding Users
+                </button>
+                <a href="/phones" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-phone mr-2"></i>Manage Phones
+                </a>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing automation section
+    const existing = document.getElementById('automation-section');
+    if (existing) existing.remove();
+    
+    // Add new automation section
+    const container = document.getElementById('admin-groups-section');
+    const div = document.createElement('div');
+    div.id = 'automation-section';
+    div.innerHTML = automationHtml;
+    container.appendChild(div);
+}
+
+function startPhoneAutomation(groupId) {
+    const delay = document.getElementById('auto-delay').value;
+    const batchSize = document.getElementById('auto-batch').value;
+    
+    const formData = new FormData();
+    formData.append('group_id', groupId);
+    formData.append('delay', delay);
+    formData.append('batch_size', batchSize);
+    
+    fetch('/api/phones/automation', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const results = data.results;
+            showToast(`Automation completed: ${results.added} added, ${results.failed} failed of ${results.total} total`, 'success');
+        } else {
+            showToast('Automation failed: ' + (data.message || data.error), 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Network error occurred', 'error');
+    });
+}
+
+function loadSessions(page = 0) {
+    const offset = page * sessionsPerPage;
+    fetch(`/api/sessions?offset=${offset}&limit=${sessionsPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                totalSessions = data.total;
+                totalSessionsPages = Math.ceil(totalSessions / sessionsPerPage);
+                currentSessionsPage = page;
+                renderSessionsTable(data.sessions);
+                renderSessionsPagination();
+            }
+        })
+        .catch(error => console.error('Error loading sessions:', error));
+}
+
+function renderSessionsTable(sessions) {
+    const tbody = document.getElementById('sessions-table');
+    
+    if (sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No sessions found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sessions.map(session => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${session.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}">${session.status}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(session.created_at)}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex space-x-2">
+                    <button onclick="deleteSession('${session.name}')" class="bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-900 px-3 py-2 rounded-lg transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-trash mr-1"></i>Delete
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'active': return 'bg-green-100 text-green-800';
+        case 'pending': return 'bg-yellow-100 text-yellow-800';
+        case 'generating': return 'bg-blue-100 text-blue-800';
+        case 'waiting': return 'bg-purple-100 text-purple-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleString();
+}
+
+function updateUI() {
+    document.getElementById('session-creation-enabled').checked = settings.session_creation_enabled || false;
+    document.getElementById('auto-add-enabled').checked = settings.auto_add_enabled || false;
+    document.getElementById('target-group-id').value = settings.target_group_id || '';
+    document.getElementById('max-users').value = settings.max_users || 50;
+    document.getElementById('delay-seconds').value = settings.delay_seconds || 10;
+    document.getElementById('batch-size').value = settings.batch_size || 3;
+}
+
+function saveSettings() {
+    const newSettings = {
+        session_creation_enabled: document.getElementById('session-creation-enabled').checked,
+        auto_add_enabled: document.getElementById('auto-add-enabled').checked,
+        target_group_id: document.getElementById('target-group-id').value,
+        max_users: parseInt(document.getElementById('max-users').value),
+        delay_seconds: parseInt(document.getElementById('delay-seconds').value),
+        batch_size: parseInt(document.getElementById('batch-size').value)
+    };
+    
+    fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(newSettings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Settings saved successfully!', 'success');
+            settings = newSettings;
+            refreshAutoAddState();
+        } else {
+            showToast('Failed to save settings', 'error');
+        }
+    });
+}
+
+function toggleAutoAdd() {
+    const button = document.getElementById('auto-add-button');
+    if (button) {
+        button.disabled = true;
+    }
+
+    const action = autoAddState.enabled ? 'stop' : 'start';
+
+    fetch(`/api/admin/auto-add/${action}`, {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.state) {
+                    autoAddState = data.state;
+                }
+                showToast(`Auto add ${action === 'start' ? 'enabled' : 'paused'}`, 'success');
+            } else {
+                showToast('Failed to update auto add status', 'error');
+            }
+        })
+        .catch(() => {
+            showToast('Network error occurred', 'error');
+        })
+        .finally(() => {
+            refreshAutoAddState();
+        });
+}
+
+function refreshAutoAddState() {
+    fetch('/api/admin/auto-add/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.state) {
+                autoAddState = data.state;
+                updateAutoAddControls();
+            }
+        })
+        .catch(error => console.error('Error loading auto add status:', error))
+        .finally(() => {
+            const button = document.getElementById('auto-add-button');
+            if (button && !autoAddState.running) {
+                button.disabled = false;
+            }
+        });
+}
+
+function updateAutoAddControls() {
+    const button = document.getElementById('auto-add-button');
+    const buttonText = document.getElementById('auto-add-button-text');
+    const buttonIcon = document.getElementById('auto-add-button-icon');
+    const status = document.getElementById('auto-add-status-message');
+
+    if (!button || !buttonText || !buttonIcon || !status) return;
+
+    const running = !!autoAddState.running;
+    const enabled = !!autoAddState.enabled;
+
+    button.disabled = running;
+    button.classList.toggle('opacity-75', running);
+
+    if (running) {
+        buttonIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        buttonText.textContent = 'Running...';
+        status.textContent = 'Automation is running now';
+    } else if (enabled) {
+        //background should be red to indicate stop
+        buttonIcon.innerHTML = '<i class="fas fa-stop"></i>';
+        button.classList.add('bg-red-500');
+        button.classList.remove('bg-green-500');
+        buttonText.textContent = 'Stop Auto Add';
+
+        const messages = [];
+        if (autoAddState.last_run) {
+            messages.push(`Last run ${formatAutoAddTimestamp(autoAddState.last_run)}`);
+        }
+        if (autoAddState.next_run) {
+            messages.push(`Next window ${formatAutoAddTimestamp(autoAddState.next_run)}`);
+        }
+        status.textContent = messages.length ? messages.join(' • ') : 'Waiting for the next run';
+    } else {
+        buttonIcon.innerHTML = '<i class="fas fa-play"></i>';
+        buttonText.textContent = 'Start Auto Add';
+        status.textContent = 'Automation paused';
+    }
+
+    if (typeof autoAddState.total_group_members === 'number') {
+        const totalEl = document.getElementById('total-members');
+        if (totalEl) {
+            totalEl.textContent = autoAddState.total_group_members;
+        }
+    }
+}
+
+function formatAutoAddTimestamp(value) {
+    try {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+    } catch (error) {
+        return value;
+    }
+}
+
+function loadAdminAsUserToggle() {
+    fetch('/api/admin/use-admin-as-user')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const toggle = document.getElementById('admin-as-user-toggle');
+                if (toggle) {
+                    toggle.checked = data.enabled;
+                }
+            }
+        })
+        .catch(error => console.error('Error loading admin-as-user toggle:', error));
+}
+
+function toggleAdminAsUser() {
+    const toggle = document.getElementById('admin-as-user-toggle');
+    const enabled = toggle.checked;
+    
+    const formData = new FormData();
+    formData.append('enabled', enabled);
+    
+    fetch('/api/admin/use-admin-as-user', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Admin as user session ${enabled ? 'enabled' : 'disabled'}`, 'success');
+        } else {
+            showToast('Failed to update setting', 'error');
+            toggle.checked = !enabled;
+        }
+    })
+    .catch(error => {
+        showToast('Network error occurred', 'error');
+        toggle.checked = !enabled;
+    });
+}
+
+function loadUserAsAdminToggle() {
+    fetch('/api/admin/use-user-as-admin')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const toggle = document.getElementById('user-as-admin-toggle');
+                if (toggle) {
+                    toggle.checked = data.enabled;
+                }
+            }
+        })
+        .catch(error => console.error('Error loading user-as-admin toggle:', error));
+}
+
+function toggleUserAsAdmin() {
+    const toggle = document.getElementById('user-as-admin-toggle');
+    const enabled = toggle.checked;
+    
+    const formData = new FormData();
+    formData.append('enabled', enabled);
+    
+    fetch('/api/admin/use-user-as-admin', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`User as admin session ${enabled ? 'enabled' : 'disabled'}`, 'success');
+        } else {
+            showToast('Failed to update setting', 'error');
+            toggle.checked = !enabled;
+        }
+    })
+    .catch(error => {
+        showToast('Network error occurred', 'error');
+        toggle.checked = !enabled;
+    });
+}
+
+function deleteSession(sessionName) {
+    if (!confirm('Delete this session?')) return;
+    
+    fetch(`/api/sessions/${encodeURIComponent(sessionName)}`, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Session deleted successfully', 'success');
+                loadSessions(currentSessionsPage);
+                loadStats();
+            } else {
+                showToast('Failed to delete session', 'error');
+            }
+        });
+}
+
+function deleteAllSessions() {
+    if (!confirm('Delete ALL sessions? This cannot be undone!')) return;
+    
+    fetch('/api/sessions', {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('All sessions deleted successfully', 'success');
+                loadSessions(currentSessionsPage);
+                loadStats();
+            } else {
+                showToast('Failed to delete all sessions', 'error');
+            }
+        });
+}
+
+function showToast(message, type) {
+    // Simple toast implementation
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function updateTargetGroupCount() {
+    const btn = document.getElementById('updateGroupCountBtn');
+    const icon = btn.querySelector('i');
+    
+    btn.disabled = true;
+    icon.classList.add('fa-spin');
+    
+    fetch('/api/groups/update-counts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Target group count updated: ${data.count} members`, 'success');
+            loadStats();
+            loadAllGroups();
+        } else {
+            showToast(data.error || 'Failed to update group count', 'error');
+        }
+    })
+    .catch(err => {
+        showToast('Failed to update group count', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        icon.classList.remove('fa-spin');
+    });
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Admin page loading...');
+    loadSettings();
+    loadStats();
+    loadSessions();
+    
+    // Force load admin session with fallback
+    setTimeout(() => {
+        console.log('Loading admin session...');
+        loadAdminSession();
+    }, 100);
+    
+    // Additional fallback after 3 seconds
+    setTimeout(() => {
+        const statusDiv = document.getElementById('admin-session-status');
+        if (statusDiv && statusDiv.innerHTML.includes('Loading admin session status')) {
+            console.log('Admin session still loading, forcing...');
+            forceLoadAdminSession();
+        }
+    }, 3000);
+    
+    refreshAutoAddState();
+    
+    // Update group count on page load (delayed) - only if target group is set
+    setTimeout(() => {
+        const select = document.getElementById('target-group-select');
+        if (select && select.value) {
+            updateTargetGroupCountSilently();
+        }
+    }, 5000);
+});
+
+function renderSessionsPagination() {
+    const container = document.getElementById('sessions-pagination-buttons');
+    const showingFrom = document.getElementById('sessions-showing-from');
+    const showingTo = document.getElementById('sessions-showing-to');
+    const totalCount = document.getElementById('sessions-total-count');
+    
+    // Update showing info
+    const from = currentSessionsPage * sessionsPerPage + 1;
+    const to = Math.min((currentSessionsPage + 1) * sessionsPerPage, totalSessions);
+    showingFrom.textContent = totalSessions > 0 ? from : 0;
+    showingTo.textContent = to;
+    totalCount.textContent = totalSessions;
+    
+    if (totalSessionsPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let buttons = [];
+    
+    // Previous button
+    buttons.push(`
+        <button onclick="changeSessionsPage(${currentSessionsPage - 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${currentSessionsPage === 0 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}" 
+                ${currentSessionsPage === 0 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `);
+    
+    // Page numbers
+    const startPage = Math.max(0, currentSessionsPage - 2);
+    const endPage = Math.min(totalSessionsPages - 1, currentSessionsPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        buttons.push(`
+            <button onclick="changeSessionsPage(${i})" 
+                    class="px-3 py-2 text-sm font-medium border ${i === currentSessionsPage ? 'bg-telegram text-white border-telegram' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'}">
+                ${i + 1}
+            </button>
+        `);
+    }
+    
+    // Next button
+    buttons.push(`
+        <button onclick="changeSessionsPage(${currentSessionsPage + 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${currentSessionsPage === totalSessionsPages - 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}" 
+                ${currentSessionsPage === totalSessionsPages - 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `);
+    
+    container.innerHTML = buttons.join('');
+}
+
+function changeSessionsPage(page) {
+    if (page < 0 || page >= totalSessionsPages || page === currentSessionsPage) return;
+    loadSessions(page);
+}
+
+// Refresh data every 30 seconds (reduced frequency)
+setInterval(() => {
+    loadStats();
+    loadSessions(currentSessionsPage);
+    refreshAutoAddState();
+}, 30000);
+
+// Update group count less frequently (every 2 minutes) - only if target group is set
+setInterval(() => {
+    const select = document.getElementById('target-group-select');
+    if (select && select.value) {
+        updateTargetGroupCountSilently();
+    }
+}, 120000);
+
+// Update group count when page becomes visible - only if target group is set
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        setTimeout(() => {
+            const select = document.getElementById('target-group-select');
+            if (select && select.value) {
+                updateTargetGroupCountSilently();
+            }
+        }, 1000);
+    }
+});
+
+// Update group count silently without showing toast
+function updateTargetGroupCountSilently() {
+    return new Promise((resolve) => {
+        // Check if target group is selected first
+        const select = document.getElementById('target-group-select');
+        if (!select || !select.value) {
+            console.log('No target group selected, skipping count update');
+            resolve();
+            return;
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        fetch('/api/groups/update-counts', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            signal: controller.signal
+        })
+        .then(response => {
+            clearTimeout(timeoutId);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Group count updated:', data.count);
+                // Refresh groups dropdown to show updated counts
+                if (groupsLoaded) {
+                    setTimeout(() => loadAllGroups(), 1000);
+                }
+            } else {
+                console.log('Group count update failed:', data.error);
+            }
+            resolve();
+        })
+        .catch(err => {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                console.log('Group count update timed out');
+            } else {
+                console.log('Silent group count update failed:', err);
+            }
+            resolve();
+        });
+    });
+}
+</script>
+{% endblock %}

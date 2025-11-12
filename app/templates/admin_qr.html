@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Admin QR - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-crown mr-3 text-purple-600"></i>Admin Session Setup
+        </h1>
+        <p class="text-lg text-gray-600">Scan the QR code with your admin Telegram account to manage groups</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="p-8">
+            <div id="qr-container" class="text-center">
+                <div id="loading" class="py-12">
+                    <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-purple-600 bg-white">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating Admin QR Code...
+                    </div>
+                </div>
+                
+                <div id="qr-display" class="hidden">
+                    <div class="bg-purple-50 rounded-lg p-8 mb-6 inline-block border-2 border-purple-200">
+                        <img id="qr-image" src="" alt="Admin QR Code" class="max-w-xs mx-auto">
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div class="flex items-center justify-center mb-2">
+                                <i class="fas fa-crown text-purple-600 mr-2"></i>
+                                <span class="font-semibold text-purple-800">Admin Account Required</span>
+                            </div>
+                            <p class="text-purple-700 text-sm">
+                                This QR code must be scanned with the Telegram account that has admin access to your groups
+                            </p>
+                        </div>
+                        <p class="text-gray-600">
+                            <i class="fas fa-mobile-alt mr-2 text-purple-600"></i>
+                            Open Telegram on your phone and scan this QR code
+                        </p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="generateNewQR()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-redo mr-2"></i>Generate New
+                            </button>
+                            <button onclick="window.location.href='/admin'" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Admin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="success-message" class="hidden">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                        <i class="fas fa-check-circle text-green-500 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-green-800 mb-2">Admin Session Created!</h3>
+                        <p class="text-green-700 mb-4">Your admin session has been created successfully. Groups are being loaded...</p>
+                        <button onclick="window.location.href='/admin'" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-cog mr-2"></i>Go to Admin Panel
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="error-message" class="hidden">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-red-800 mb-2">QR Generation Failed</h3>
+                        <p class="text-red-700 mb-4" id="error-text">QR code generation failed</p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="window.location.href='/admin'" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Admin
+                            </button>
+                            <button onclick="generateNewQR()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-redo mr-2"></i>Try Again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="expired-message" class="hidden">
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                        <i class="fas fa-clock text-orange-500 text-2xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-orange-800 mb-2">QR Code Expired</h3>
+                        <p class="text-orange-700 mb-4">The QR code has expired. Please generate a new one.</p>
+                        <button onclick="generateNewQR()" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Generate New QR
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="password-required" class="hidden">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <i class="fas fa-lock text-yellow-500 text-2xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-2">Two-Factor Authentication</h3>
+                        <p class="text-yellow-700 mb-4">Your admin account has 2FA enabled. Please enter your password:</p>
+                        <div class="space-y-4">
+                            <input type="password" id="tfa-password" placeholder="Enter your 2FA password" 
+                                   class="w-full px-4 py-3 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <div class="flex justify-center space-x-4">
+                                <button onclick="verify2FA()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                                    <i class="fas fa-key mr-2"></i>Verify Password
+                                </button>
+                                <button onclick="generateNewQR()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-redo mr-2"></i>Start Over
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSession = null;
+let statusInterval = null;
+let isGenerating = false;
+
+async function generateNewQR() {
+    if (isGenerating) return;
+    isGenerating = true;
+    
+    showElement('loading');
+    hideElements(['qr-display', 'success-message', 'error-message', 'expired-message', 'password-required']);
+    stopStatusCheck();
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch('/api/admin/qr', { 
+            method: 'POST',
+            signal: controller.signal,
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        const data = await response.json();
+        console.log('Admin QR response:', data);
+        
+        if (data.success && data.data.qr_image) {
+            currentSession = data.data.session_name;
+            document.getElementById('qr-image').src = data.data.qr_image;
+            showElement('qr-display');
+            hideElement('loading');
+            startStatusCheck();
+        } else {
+            throw new Error(data.error || 'Failed to generate admin QR code');
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            showToast('Request timeout - please try again', 'error');
+        } else {
+            const errorMsg = error.message || 'Unknown error occurred';
+            document.getElementById('error-text').textContent = errorMsg;
+            
+            // Update title based on error type
+            const errorTitle = document.querySelector('#error-message h3');
+            if (errorMsg.includes('already exists')) {
+                errorTitle.textContent = 'Admin Session Exists';
+            } else if (errorMsg.includes('timeout')) {
+                errorTitle.textContent = 'Request Timeout';
+            } else {
+                errorTitle.textContent = 'QR Generation Failed';
+            }
+            
+            hideElement('loading');
+            showElement('error-message');
+        }
+    } finally {
+        isGenerating = false;
+    }
+}
+
+async function checkStatus() {
+    if (!currentSession) return;
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`/api/admin/${currentSession}/qr-status`, {
+            signal: controller.signal,
+            headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        clearTimeout(timeoutId);
+        const data = await response.json();
+        
+        if (data.success) {
+            const status = data.data.status;
+            
+            switch (status) {
+                case 'success':
+                    stopStatusCheck();
+                    hideElements(['qr-display', 'loading']);
+                    showElement('success-message');
+                    setTimeout(() => window.location.href = '/admin', 3000);
+                    break;
+                case 'expired':
+                    stopStatusCheck();
+                    hideElements(['qr-display', 'loading']);
+                    showElement('expired-message');
+                    break;
+                case 'password_required':
+                    stopStatusCheck();
+                    hideElements(['qr-display', 'loading']);
+                    showElement('password-required');
+                    document.getElementById('tfa-password').focus();
+                    break;
+                case 'error':
+                    stopStatusCheck();
+                    hideElements(['qr-display', 'loading']);
+                    document.getElementById('error-text').textContent = 'QR code generation failed';
+                    showElement('error-message');
+                    break;
+            }
+        }
+    } catch (error) {
+        if (error.name !== 'AbortError') {
+            console.error('Status check failed:', error);
+        }
+    }
+}
+
+function startStatusCheck() {
+    statusInterval = setInterval(checkStatus, 2000);
+}
+
+function stopStatusCheck() {
+    if (statusInterval) {
+        clearInterval(statusInterval);
+        statusInterval = null;
+    }
+}
+
+function showElement(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function hideElement(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+function hideElements(ids) {
+    ids.forEach(id => hideElement(id));
+}
+
+async function verify2FA() {
+    const password = document.getElementById('tfa-password').value;
+    if (!password) {
+        showToast('Please enter your password', 'error');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('password', password);
+        
+        const response = await fetch(`/api/admin/${currentSession}/verify-2fa`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data.status === 'success') {
+            hideElement('password-required');
+            showElement('success-message');
+            setTimeout(() => window.location.href = '/admin', 3000);
+        } else {
+            showToast('Invalid password. Please try again.', 'error');
+            document.getElementById('tfa-password').value = '';
+            document.getElementById('tfa-password').focus();
+        }
+    } catch (error) {
+        showToast('Verification failed. Please try again.', 'error');
+    }
+}
+
+// Start QR generation on page load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(generateNewQR, 100);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', stopStatusCheck);
+
+// Handle Enter key in password field
+document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && document.getElementById('password-required').style.display !== 'none') {
+        verify2FA();
+    }
+});
+</script>
+{% endblock %}

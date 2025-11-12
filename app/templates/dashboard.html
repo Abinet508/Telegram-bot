@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Telegram Bot Manager{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <i class="fas fa-users mr-3 text-telegram"></i>Telegram Group Onboarding
+    </h1>
+    <p class="text-lg text-gray-600">Welcome to our automated group joining system. Scan the QR code to instantly join our Telegram community.</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Active Sessions</p>
+                <p class="text-3xl font-bold" id="active-sessions">0</p>
+            </div>
+            <div class="bg-blue-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-users text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-medium">Total Members</p>
+                <p class="text-3xl font-bold" id="total-members">0</p>
+            </div>
+            <div class="bg-green-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-user-friends text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-yellow-100 text-sm font-medium">Blacklisted</p>
+                <p class="text-3xl font-bold" id="blacklisted-users">0</p>
+            </div>
+            <div class="bg-yellow-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-user-slash text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Operations</p>
+                <p class="text-3xl font-bold" id="active-operations">0</p>
+            </div>
+            <div class="bg-purple-400 bg-opacity-30 rounded-full p-3">
+                <i class="fas fa-cogs text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Beautiful Public View -->
+<div id="public-cards" class="mb-12" style="display: none;">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <div class="gradient-bg rounded-3xl shadow-2xl p-12 mx-auto max-w-2xl relative overflow-hidden">
+            <div class="absolute inset-0 bg-white bg-opacity-10 backdrop-blur-sm"></div>
+            <div class="relative z-10">
+                <div class="bg-white bg-opacity-20 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center animate-float">
+                    <i class="fab fa-telegram-plane text-4xl text-white"></i>
+                </div>
+                <h2 class="text-4xl font-bold text-white mb-4">Join Our Community</h2>
+                <p class="text-xl text-blue-100 mb-8">Connect with people in our growing Telegram community</p>
+                <div class="bg-white bg-opacity-20 rounded-2xl p-6 backdrop-blur-sm animate-pulse-slow">
+                    <div class="flex items-center justify-center space-x-4">
+                        <div class="bg-white bg-opacity-30 rounded-full p-4 animate-float">
+                            <i class="fas fa-users text-2xl text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-blue-100 text-sm font-medium">Community Members</p>
+                            <p class="text-5xl font-bold text-white" id="public-total-members">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Group Information Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div class="bg-gradient-to-br from-telegram to-telegram-dark rounded-full p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <i class="fab fa-telegram-plane text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Official Channel</h3>
+            <p class="text-gray-600">Join our main Telegram channel for updates and announcements</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-full p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <i class="fas fa-users text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3" id="group-name">Community Hub</h3>
+            <p class="text-gray-600">Connect with members and participate in group discussions</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div class="bg-gradient-to-br from-purple-400 to-purple-600 rounded-full p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <i class="fas fa-clock text-2xl text-white"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">24/7 Active</h3>
+            <p class="text-gray-600">Round-the-clock community activity and support</p>
+        </div>
+    </div>
+</div>
+
+<!-- Admin-only sections (hidden by default) -->
+<div id="admin-sections" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" style="display: none;">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-users mr-2 text-telegram"></i>Recent Sessions
+            </h3>
+        </div>
+        <div class="p-6">
+            <div id="recent-sessions">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-chart-line mr-2 text-telegram"></i>Active Operations
+            </h3>
+        </div>
+        <div class="p-6">
+            <div id="active-operations-list">
+                <div class="text-center text-gray-500">
+                    No active operations
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="bg-gradient-to-r from-telegram to-telegram-dark px-8 py-6">
+        <h3 class="text-2xl font-bold text-white">
+            <i class="fas fa-rocket mr-3"></i>Get Started
+        </h3>
+        <p class="text-blue-100 mt-2">Choose how you'd like to join our community</p>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="/qr" class="group bg-gradient-to-br from-telegram via-blue-500 to-purple-600 hover:from-purple-600 hover:via-blue-500 hover:to-telegram text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-white bg-opacity-10 group-hover:bg-opacity-20 transition-all duration-300"></div>
+                <div class="relative z-10">
+                    <i class="fas fa-qrcode text-2xl mb-2 block"></i>
+                    <span class="text-lg">Join Our Telegram Group</span>
+                    <p class="text-blue-100 text-xs mt-1">Scan QR code for instant access</p>
+                </div>
+            </a>
+            <div id="admin-login-btn">
+                <a href="/login" class="group bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 hover:text-gray-900 font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-center border-2 border-gray-300 hover:border-gray-400 relative overflow-hidden block">
+                    <div class="relative z-10">
+                        <i class="fas fa-user-shield text-2xl mb-2 block text-gray-600 group-hover:text-gray-800"></i>
+                        <span class="text-lg">Admin Login</span>
+                        <p class="text-gray-500 group-hover:text-gray-700 text-xs mt-1">Access admin dashboard</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let isAdmin = false;
+
+// Load dashboard data
+function loadDashboardData() {
+    // Load stats (always available)
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const totalMembers = data.stats.total_group_members ?? 0;
+                if (isAdmin) {
+                    document.getElementById('active-sessions').textContent = data.stats.active_sessions ?? 0;
+                    document.getElementById('total-members').textContent = totalMembers;
+                    document.getElementById('blacklisted-users').textContent = data.stats.blacklisted_users ?? 0;
+                    document.getElementById('active-operations').textContent = (data.stats.active_operations ?? 0) + (data.stats.pending_operations ?? 0);
+                } else {
+                    document.getElementById('public-total-members').textContent = totalMembers;
+                    // Add animation to the counter
+                    animateCounter('public-total-members', totalMembers);
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Stats not available:', error);
+        });
+    
+    // Check admin status
+    fetch('/api/sessions')
+        .then(response => {
+            if (response.status === 401) {
+                // Not authenticated - show only public view
+                isAdmin = false;
+                document.querySelector('.grid.grid-cols-1.md\\:grid-cols-4').style.display = 'none';
+                document.getElementById('public-cards').style.display = 'flex';
+                document.getElementById('admin-sections').style.display = 'none';
+                document.getElementById('admin-login-btn').style.display = 'block';
+            // Add floating animation to public cards
+            setTimeout(() => {
+                const publicCards = document.getElementById('public-cards');
+                if (publicCards && publicCards.style.display !== 'none') {
+                    publicCards.style.animation = 'fadeInUp 0.8s ease-out';
+                }
+            }, 100);
+                return null;
+            }
+            // Authenticated - show admin view
+            isAdmin = true;
+            document.querySelector('.grid.grid-cols-1.md\\:grid-cols-4').style.display = 'grid';
+            document.getElementById('public-cards').style.display = 'none';
+            document.getElementById('admin-sections').style.display = 'grid';
+            document.getElementById('admin-login-btn').style.display = 'none';
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.success && isAdmin) {
+                const activeSessions = data.sessions.filter(s => s.status === 'active').length;
+                document.getElementById('active-sessions').textContent = activeSessions;
+                
+                const container = document.getElementById('recent-sessions');
+                if (data.sessions.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-500">No sessions found</div>';
+                } else {
+                    container.innerHTML = data.sessions.slice(0, 5).map(session => `
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                            <span class="text-gray-900 font-medium">${session.name}</span>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                session.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }">${session.status}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Admin check failed:', error);
+        });
+}
+
+// Update group count silently (admin only)
+function updateTargetGroupCountSilently() {
+    if (!isAdmin) return; // Skip if not admin
+    
+    fetch('/api/groups/update-counts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => {
+        if (response.status === 401) return; // Skip if unauthorized
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            loadDashboardData(); // Refresh stats to show updated count
+        }
+    })
+    .catch(err => {
+        console.log('Silent group count update failed:', err);
+    });
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardData();
+    
+    // Update group count on page load
+    setTimeout(() => {
+        updateTargetGroupCountSilently();
+    }, 2000);
+});
+
+// Refresh data every 30 seconds
+setInterval(loadDashboardData, 30000);
+
+// Update group count when page becomes visible
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        setTimeout(() => {
+            updateTargetGroupCountSilently();
+        }, 1000);
+    }
+});
+
+// Animate counter function
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const startValue = 0;
+    const duration = 300; // 0.3 seconds
+    const startTime = performance.now();
+    
+    function updateCounter(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const currentValue = Math.floor(startValue + (targetValue - startValue) * easeOutQuart);
+        
+        element.textContent = currentValue;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        } else {
+            element.textContent = targetValue;
+        }
+    }
+    
+    requestAnimationFrame(updateCounter);
+}
+</script>
+{% endblock %}

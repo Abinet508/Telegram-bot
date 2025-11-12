@@ -1,0 +1,129 @@
+/* Custom styles for Telegram Bot Manager */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn {
+    border-radius: 0.375rem;
+}
+
+.progress {
+    height: 1rem;
+}
+
+.operation-item {
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.operation-item:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.toast {
+    min-width: 300px;
+}
+
+.qr-container {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.stats-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stats-card h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+}
+
+/* Animation for loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Custom progress bar colors */
+.progress-bar-scrape {
+    background-color: #28a745;
+}
+
+.progress-bar-add {
+    background-color: #007bff;
+}
+
+/* Status indicators */
+.status-active {
+    color: #28a745;
+}
+
+.status-waiting {
+    color: #ffc107;
+}
+
+.status-error {
+    color: #dc3545;
+}
+
+/* QR Code styling */
+#qrCodeImage {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: #fff;
+}
